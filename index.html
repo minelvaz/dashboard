@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Timetable with Fixed Add Task Button</title>
+    <title>Interactive Timetable with Updated Task Management</title>
     <style>
         :root {
             --primary-bg: #f0f2f5;
@@ -55,7 +55,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             overflow: hidden;
-            height: 90vh; /* Ensure the main container has a definite height */
+            height: 90vh; 
         }
 
         /* --- LEFT SIDEBAR (TASKS) --- */
@@ -66,7 +66,7 @@
             padding: 20px;
             display: flex;
             flex-direction: column; 
-            height: 100%; /* Important: Takes full height of the main-container side */
+            height: 100%; 
             box-sizing: border-box;
         }
 
@@ -86,12 +86,12 @@
             flex-shrink: 0;
         }
 
-        /* Scrolling container for the tasks */
+        /* Scrolling container for the tasks (UPDATED: flex-grow: 0) */
         .task-list-container {
-            flex-grow: 1; 
+            flex-grow: 0;           /* CHANGED: This allows the button to sit right below the list */
             overflow-y: auto; 
             padding-right: 5px; 
-            /* Remove padding-bottom here to manage margin with the button below */
+            max-height: 80%;       /* Added: To ensure scroll still works if the list grows very long */
         }
 
         .task-list {
@@ -166,7 +166,7 @@
             outline: none;
         }
         
-        /* Add Task Button (Fixed at bottom of sidebar when list scrolls) */
+        /* Add Task Button (Now sits right below the list) */
         .add-task-btn {
             padding: 10px;
             background-color: #1890ff;
@@ -178,7 +178,7 @@
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(24, 144, 255, 0.4);
             transition: background-color 0.2s;
-            margin-top: 15px; /* Increased margin for separation */
+            margin-top: 15px; 
             flex-shrink: 0; 
             width: 100%; 
             box-sizing: border-box; 
@@ -501,8 +501,20 @@
                 deleteBtn.innerText = "x";
                 deleteBtn.title = "Click to remove";
                 
+                // UX Improvement: Returns task to sidebar list if it's deleted from the schedule
                 deleteBtn.onclick = function() {
+                    const taskName = this.parentElement.querySelector('span').innerText;
+                    
+                    // 1. Remove the scheduled task from the timetable slot
                     this.parentElement.remove();
+                    
+                    // 2. Check if the task is still in the main sidebar list
+                    if (!initialTasks.includes(taskName)) {
+                        // 3. Add it back and re-render the list
+                        initialTasks.push(taskName);
+                        renderTasks();
+                    }
+                    
                     updateSlotSizing(targetSlot); 
                 };
 
