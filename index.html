@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Timetable with Fixed Add Task Button</title>
+    <style>
+        :root {
+            --primary-bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            
+            /* Event Colors */
+            --color-morning: #fff8e1; 
+            --border-morning: #ffe082;
+            --color-sleep: #e8eaf6;   
+            --border-sleep: #9fa8da;
+
+            /* Sidebar Task Label Colors (Clean White Pill) */
+            --sidebar-task-bg: #ffffff;
+            --sidebar-task-border: #ddd;
+            --sidebar-task-text: #2c3e50;
+            --sidebar-delete-color: #ef5350;
+
+            /* Scheduled Task Label Colors (Cyan/Blue background) */
+            --scheduled-task-bg: #e0f7fa;
+            --scheduled-task-border: #80deea;
+            --scheduled-task-text: #006064;
+
+            /* Delete Button Color (for scheduled tasks) */
+            --delete-bg: #ef5350; 
+            
+            /* Header Colors */
+            --color-header-sat: #e0e0e0;
+            --color-header-sun: #ef5350;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .main-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+            height: 90vh; /* Ensure the main container has a definite height */
+        }
+
+        /* --- LEFT SIDEBAR (TASKS) --- */
+        .sidebar {
+            width: 250px;
+            background-color: #ffffff; 
+            border-right: 1px solid #eee;
+            padding: 20px;
+            display: flex;
+            flex-direction: column; 
+            height: 100%; /* Important: Takes full height of the main-container side */
+            box-sizing: border-box;
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: var(--text-main);
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+        
+        .sidebar p {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        /* Scrolling container for the tasks */
+        .task-list-container {
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding-right: 5px; 
+            /* Remove padding-bottom here to manage margin with the button below */
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Draggable Task Styling (Clean White Pill) */
+        .task-item {
+            background: var(--sidebar-task-bg);
+            color: var(--sidebar-task-text);
+            border: 1px solid var(--sidebar-task-border);
+            padding: 10px 16px;
+            margin-bottom: 10px;
+            border-radius: 25px; 
+            font-size: 14px;
+            font-weight: 500;
+            cursor: grab;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            user-select: none;
+            position: relative;
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-item span {
+            flex-grow: 1;
+            text-align: center;
+            padding: 0 5px; 
+            min-width: 0; 
+        }
+
+        /* Delete button for Task List (The 'x' on hover) */
+        .task-item .sidebar-delete-btn {
+            color: var(--sidebar-delete-color);
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s;
+            width: 15px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        
+        .task-item:hover .sidebar-delete-btn {
+            opacity: 1;
+        }
+
+        .task-item.editing {
+            border: 2px solid #1890ff;
+            cursor: default;
+        }
+        .task-item.editing .sidebar-delete-btn {
+            display: none;
+        }
+
+        .task-item input {
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--sidebar-task-text);
+            width: 100%;
+            text-align: center;
+        }
+        .task-item input:focus {
+            outline: none;
+        }
+        
+        /* Add Task Button (Fixed at bottom of sidebar when list scrolls) */
+        .add-task-btn {
+            padding: 10px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(24, 144, 255, 0.4);
+            transition: background-color 0.2s;
+            margin-top: 15px; /* Increased margin for separation */
+            flex-shrink: 0; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        .add-task-btn:hover {
+            background-color: #40a9ff;
+        }
+        
+
+        /* --- TIMETABLE GRID STYLING (UNCHANGED) --- */
+        .schedule-area { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        .schedule-header { margin-bottom: 15px; font-size: 24px; font-weight: bold; }
+        
+        .timetable-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            grid-template-rows: 40px auto; 
+            gap: 8px; 
+        }
+
+        .day-header { display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background-color: #f8f9fa; }
+        .day-header.sat { background-color: var(--color-header-sat); }
+        .day-header.sun { background-color: var(--color-header-sun); color: white; }
+        
+        .grid-content { 
+            grid-column: 1 / -1; 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            grid-template-rows: 60px minmax(60px, 150px) 60px; 
+            gap: 8px; 
+        }
+
+        .event-fixed { display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 14px; font-weight: bold; border-left: 4px solid transparent; z-index: 2; }
+
+        .morning-reset { 
+            grid-column: 1 / 6; 
+            grid-row: 1; 
+            background-color: var(--color-morning);
+            border-left-color: var(--border-morning);
+            color: #795548;
+        }
+
+        .sleep-time { 
+            grid-column: 1 / 6; 
+            grid-row: 3; 
+            background-color: var(--color-sleep);
+            border-left-color: var(--border-sleep);
+            color: #3f51b5;
+        }
+
+        .slot { 
+            grid-row: 2; 
+            border: 1px dashed #eee; 
+            border-radius: 6px; 
+            background-color: #fff; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 2px; 
+            padding: 2px; 
+        }
+        .weekend-slot { background-color: #fafafa; }
+        .slot.drag-over { background-color: #f0f9ff; border-color: #2196f3; border-style: solid; }
+
+        .scheduled-task {
+            background-color: var(--scheduled-task-bg);
+            color: var(--scheduled-task-text);
+            border: 1px solid var(--scheduled-task-border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 25px; 
+            flex-grow: 1; 
+            min-height: 20px; 
+        }
+
+        /* Delete button for scheduled tasks (x in a red circle) */
+        .delete-btn {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px; 
+            height: 15px;
+            border-radius: 50%;
+            background-color: var(--delete-bg);
+            color: white;
+            font-weight: bold;
+            line-height: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-family: sans-serif;
+            opacity: 0; 
+            transition: opacity 0.15s;
+        }
+        .scheduled-task:hover .delete-btn {
+            opacity: 1;
+        }
+
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+z73tLFSF9w5zX7W0D4u8nE/g/4Q5v5tTzKzU5lM2rL3w+gH/p/j/nK6t7l1o4u4U7uJ0O9w4g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+
+    <div class="main-container">
+        
+        <aside class="sidebar">
+            <h2>Tasks</h2>
+            <p>Drag these to the grid:</p>
+            
+            <div class="task-list-container">
+                <ul class="task-list" id="taskList">
+                    </ul>
+            </div>
+            
+            <div class="add-task-btn" onclick="addTask()">
+                + Add New Task
+            </div>
+            
+        </aside>
+
+        <main class="schedule-area">
+            <div class="schedule-header">Weekly Schedule</div>
+            
+            <div class="timetable-grid">
+                <div class="day-header">Mon</div>
+                <div class="day-header">Tue</div>
+                <div class="day-header">Wed</div>
+                <div class="day-header">Thu</div>
+                <div class="day-header">Fri</div>
+                <div class="day-header sat">Sat</div>
+                <div class="day-header sun">Sun</div>
+
+                <div class="grid-content">
+                    
+                    <div class="event-fixed morning-reset">Morning Reset</div>
+                    <div class="slot weekend-slot" style="grid-row: 1;"></div>
+                    <div class="slot weekend-slot" style="grid-row: 1;"></div>
+                    
+                    <div class="slot" style="grid-column: 1;" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="slot" style="grid-column: 2;" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="slot" style="grid-column: 3;" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="slot" style="grid-column: 4;" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="slot" style="grid-column: 5;" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="slot weekend-slot" style="grid-column: 6;" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="slot weekend-slot" style="grid-column: 7;" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    
+                    <div class="event-fixed sleep-time">Sleep Time</div>
+                    <div class="slot weekend-slot" style="grid-row: 3;"></div>
+                    <div class="slot weekend-slot" style="grid-row: 3;"></div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initial list of tasks
+        const initialTasks = ["Japanese", "English", "Web Dev", "Electricity"];
+        const taskList = document.getElementById('taskList');
+
+        // --- CORE TASK MANAGEMENT FUNCTIONS ---
+
+        function renderTasks() {
+            taskList.innerHTML = ''; 
+            initialTasks.forEach(taskName => {
+                const li = document.createElement("li");
+                li.className = "task-item";
+                li.draggable = true;
+                li.ondragstart = drag;
+                
+                // 1. Task Name Span (for renaming)
+                const taskText = document.createElement("span");
+                taskText.innerText = taskName;
+                taskText.ondblclick = function(e) { 
+                    e.stopPropagation(); 
+                    renameTask(li, taskName); 
+                };
+                li.appendChild(taskText);
+
+                // 2. Delete Button (The 'x' on hover)
+                const deleteBtn = document.createElement("div");
+                deleteBtn.className = "sidebar-delete-btn";
+                deleteBtn.innerText = "x";
+                deleteBtn.title = "Click to remove task template";
+                
+                deleteBtn.onclick = function(e) { 
+                    e.stopPropagation(); 
+                    deleteTask(taskName);
+                };
+                li.appendChild(deleteBtn);
+                
+                taskList.appendChild(li);
+            });
+        }
+        
+        function addTask() {
+            const newTaskName = "New Task " + (initialTasks.length + 1);
+            initialTasks.push(newTaskName);
+            renderTasks();
+            const newLi = taskList.lastChild;
+            renameTask(newLi, newTaskName);
+        }
+
+        function deleteTask(taskName) {
+            const index = initialTasks.indexOf(taskName);
+            if (index > -1) {
+                initialTasks.splice(index, 1);
+                renderTasks();
+                
+                // Also remove the task from the schedule if it exists there
+                document.querySelectorAll('.scheduled-task').forEach(scheduledTask => {
+                    if (scheduledTask.querySelector('span').innerText === taskName) {
+                        scheduledTask.remove();
+                    }
+                });
+            }
+        }
+        
+        function renameTask(li, oldName) {
+            if (li.classList.contains('editing')) return;
+
+            li.classList.add('editing');
+            li.draggable = false;
+            li.ondragstart = null;
+            li.querySelector('span').style.display = 'none'; 
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldName;
+            
+            li.insertBefore(input, li.querySelector('.sidebar-delete-btn')); 
+            input.focus();
+
+            const finishRename = () => {
+                const newName = input.value.trim();
+                const index = initialTasks.indexOf(oldName);
+                
+                if (newName && index > -1) {
+                    initialTasks[index] = newName;
+                    
+                    document.querySelectorAll('.scheduled-task').forEach(scheduledTask => {
+                        if (scheduledTask.querySelector('span').innerText === oldName) {
+                            scheduledTask.querySelector('span').innerText = newName;
+                        }
+                    });
+                } else if (newName === "" && index > -1) {
+                    if (confirm(`Do you want to permanently delete the task "${oldName}"?`)) {
+                        deleteTask(oldName);
+                        return;
+                    }
+                }
+                
+                li.removeChild(input);
+                li.classList.remove('editing');
+                renderTasks();
+            };
+
+            input.onblur = finishRename;
+            input.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    finishRename();
+                }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', renderTasks);
+
+
+        // --- DRAG & DROP FUNCTIONS ---
+        
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.querySelector('span').innerText);
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('drag-over');
+        }
+
+        document.querySelectorAll('.slot').forEach(slot => {
+            slot.addEventListener('dragleave', () => {
+                slot.classList.remove('drag-over');
+            });
+        });
+
+        function updateSlotSizing(slot) {
+            // Recalculates the height when an item is added or removed.
+            // (Function left as a placeholder, as flex-grow: 1 handles resizing)
+        }
+
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var targetSlot = ev.target;
+
+            if (!targetSlot.classList.contains('slot')) {
+                targetSlot = targetSlot.closest('.slot');
+            }
+            
+            targetSlot.classList.remove('drag-over');
+
+            if (data) {
+                var newTask = document.createElement("div");
+                newTask.className = "scheduled-task";
+                
+                var textSpan = document.createElement("span");
+                textSpan.innerText = data;
+                newTask.appendChild(textSpan);
+
+                var deleteBtn = document.createElement("div");
+                deleteBtn.className = "delete-btn";
+                deleteBtn.innerText = "x";
+                deleteBtn.title = "Click to remove";
+                
+                deleteBtn.onclick = function() {
+                    this.parentElement.remove();
+                    updateSlotSizing(targetSlot); 
+                };
+
+                newTask.appendChild(deleteBtn);
+                targetSlot.appendChild(newTask);
+                
+                updateSlotSizing(targetSlot); 
+            }
+        }
+        
+        document.querySelectorAll('.slot').forEach(slot => {
+            slot.ondrop = drop;
+            slot.ondragover = allowDrop;
+        });
+        
+    </script>
+</body>
+</html>
