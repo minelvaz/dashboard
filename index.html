@@ -75,20 +75,16 @@
             box-sizing: border-box;
         }
 
-        /* FOCUS HEADER - LEFT ALIGNED & VERTICALLY ALIGNED TO TIME TABLE */
+        /* FOCUS HEADER - Aligned with Time Table */
         .sidebar h2 {
             font-size: 28px; 
             font-weight: bold;
-            margin-bottom: 5px;
+            margin: 0;
             color: var(--text-main);
-            border-bottom: 1px solid #ddd;
-            
-            /* This tuned value ensures the bottom border aligns with the 'Time Table' bottom */
-            padding-top: 5px; 
-            padding-bottom: 20px; 
-            
+            text-align: left;
+            padding-bottom: 15px;
+            margin-bottom: 5px;
             flex-shrink: 0;
-            text-align: left; /* Set back to left alignment */
         }
         
         .task-list-container {
@@ -202,7 +198,7 @@
             padding-bottom: 20px; 
         }
         
-        /* Time Table Title Container (Remains centered over Mon-Fri) */
+        /* Time Table Title Container - Aligned with Focus */
         .main-title-container {
             grid-column: 1 / 6; 
             grid-row: 1; 
@@ -210,8 +206,8 @@
             font-weight: bold;
             color: var(--text-main);
             text-align: center;
-            padding-bottom: 15px; 
-            margin-bottom: 5px; 
+            padding-bottom: 15px;
+            margin-bottom: 5px;
         }
 
         .timetable-grid { 
