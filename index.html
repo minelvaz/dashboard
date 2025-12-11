@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Timetable - FINAL LAYOUT</title>
+    <title>Interactive Timetable - Final Layout</title>
     <style>
         :root {
             --primary-bg: #f0f2f5;
@@ -38,14 +38,12 @@
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            /* FIX: Reduced bottom padding to eliminate empty space */
             padding-top: 20px; 
             padding-right: 20px;
             padding-left: 20px;
             padding-bottom: 0; 
             background-color: var(--primary-bg);
             color: var(--text-main);
-            /* FIX: Centering and enabling content to drive height */
             display: flex;
             flex-direction: column; 
             align-items: center; 
@@ -61,13 +59,12 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             overflow: hidden;
-            /* FIX: Allows the height to be determined by content */
             min-height: 500px; 
             flex-shrink: 0;
-            margin-bottom: 20px; /* Replaces the bottom body padding */
+            margin-bottom: 20px; 
         }
 
-        /* --- LEFT SIDEBAR (TASKS) --- */
+        /* --- LEFT SIDEBAR (FOCUS) --- */
         .sidebar {
             width: 250px;
             background-color: #ffffff; 
@@ -78,23 +75,22 @@
             box-sizing: border-box;
         }
 
+        /* FOCUS HEADER - LEFT ALIGNED & VERTICALLY ALIGNED TO TIME TABLE */
         .sidebar h2 {
-            font-size: 18px;
+            font-size: 28px; 
+            font-weight: bold;
             margin-bottom: 5px;
             color: var(--text-main);
             border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
+            
+            /* Adjusted padding to lift the bottom border slightly, aiming for visual match */
+            padding-top: 5px; 
+            padding-bottom: 20px; /* TUNED VALUE */
+            
             flex-shrink: 0;
+            text-align: left; 
         }
         
-        .sidebar p {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 15px;
-            flex-shrink: 0;
-        }
-
-        /* Scrolling container for the tasks (BUTTON POSITION FIX) */
         .task-list-container {
             flex-grow: 0;           
             flex-shrink: 0;           
@@ -110,7 +106,7 @@
             margin: 0;
         }
 
-        /* Draggable Task Styling */
+        /* Draggable Focus Item Styling */
         .task-item {
             background: var(--sidebar-task-bg);
             color: var(--sidebar-task-text);
@@ -137,7 +133,7 @@
             min-width: 0; 
         }
 
-        /* Delete button for Task List */
+        /* Delete button for Focus List */
         .task-item .sidebar-delete-btn {
             color: var(--sidebar-delete-color);
             font-weight: bold;
@@ -176,7 +172,7 @@
             outline: none;
         }
         
-        /* Add Task Button */
+        /* Add Focus Button */
         .add-task-btn {
             padding: 10px;
             background-color: #1890ff;
@@ -203,23 +199,45 @@
             padding: 20px; 
             display: flex; 
             flex-direction: column; 
-            padding-bottom: 20px; /* Ensures space below the sleep time block */
+            padding-bottom: 20px; 
         }
-        .schedule-header { margin-bottom: 15px; font-size: 24px; font-weight: bold; }
         
+        /* Time Table Title Container (Remains centered over Mon-Fri) */
+        .main-title-container {
+            grid-column: 1 / 6; 
+            grid-row: 1; 
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--text-main);
+            text-align: center;
+            padding-bottom: 15px; 
+            margin-bottom: 5px; 
+        }
+
         .timetable-grid { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
-            grid-template-rows: 40px auto; 
+            grid-template-rows: auto 40px auto; 
             gap: 8px; 
         }
 
-        .day-header { display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 6px; background-color: #f8f9fa; }
+        /* Day headers */
+        .day-header { 
+            grid-row: 2; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            border-radius: 6px; 
+            background-color: #f8f9fa; 
+        }
         .day-header.sat { background-color: var(--color-header-sat); }
         .day-header.sun { background-color: var(--color-header-sun); color: white; }
         
+        /* Grid content */
         .grid-content { 
             grid-column: 1 / -1; 
+            grid-row: 3; 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
             grid-template-rows: 60px minmax(60px, 150px) 60px; 
@@ -307,8 +325,7 @@
     <div class="main-container">
         
         <aside class="sidebar">
-            <h2>Tasks</h2>
-            <p>Drag these to the grid:</p>
+            <h2>Focus</h2>
             
             <div class="task-list-container">
                 <ul class="task-list" id="taskList">
@@ -316,15 +333,17 @@
             </div>
             
             <div class="add-task-btn" onclick="addTask()">
-                + Add New Task
+                + Add New Focus
             </div>
             
         </aside>
 
         <main class="schedule-area">
-            <div class="schedule-header">Weekly Schedule</div>
             
             <div class="timetable-grid">
+                
+                <div class="main-title-container">Time Table</div>
+                
                 <div class="day-header">Mon</div>
                 <div class="day-header">Tue</div>
                 <div class="day-header">Wed</div>
@@ -361,7 +380,7 @@
         const initialTasks = ["Japanese", "English", "Web Dev", "Electricity"];
         const taskList = document.getElementById('taskList');
 
-        // --- CORE TASK MANAGEMENT FUNCTIONS ---
+        // --- CORE FOCUS/TASK MANAGEMENT FUNCTIONS ---
 
         function renderTasks() {
             taskList.innerHTML = ''; 
@@ -384,7 +403,7 @@
                 const deleteBtn = document.createElement("div");
                 deleteBtn.className = "sidebar-delete-btn";
                 deleteBtn.innerText = "x";
-                deleteBtn.title = "Click to remove task template";
+                deleteBtn.title = "Click to remove focus item";
                 
                 deleteBtn.onclick = function(e) { 
                     e.stopPropagation(); 
@@ -397,7 +416,7 @@
         }
         
         function addTask() {
-            const newTaskName = "New Task " + (initialTasks.length + 1);
+            const newTaskName = "New Focus Item " + (initialTasks.length + 1);
             initialTasks.push(newTaskName);
             renderTasks();
             const newLi = taskList.lastChild;
@@ -447,7 +466,7 @@
                         }
                     });
                 } else if (newName === "" && index > -1) {
-                    if (confirm(`Do you want to permanently delete the task "${oldName}"?`)) {
+                    if (confirm(`Do you want to permanently delete the focus item "${oldName}"?`)) {
                         deleteTask(oldName);
                         return;
                     }
@@ -515,7 +534,7 @@
                 deleteBtn.innerText = "x";
                 deleteBtn.title = "Click to remove";
                 
-                // UX Improvement: Returns task to sidebar list if it's deleted from the schedule
+                // UX Improvement: Returns focus item to sidebar list if it's deleted from the schedule
                 deleteBtn.onclick = function() {
                     const taskName = this.parentElement.querySelector('span').innerText;
                     
