@@ -3,50 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Timetable with Notes</title>
+    <title>Antique Timetable Planner</title>
     <style>
         :root {
-            --primary-bg: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-main: #2c3e50;
+            --primary-bg: #e8dcc4;
+            --card-bg: #f5ede0;
+            --text-main: #3d2e1f;
+            --border-color: #8b7355;
             
-            /* Event Colors */
-            --color-morning: #fff8e1; 
-            --border-morning: #ffe082;
-            --color-sleep: #e8eaf6;   
-            --border-sleep: #9fa8da;
+            /* Event Colors - Antique Tones */
+            --color-morning: #fef5e7; 
+            --border-morning: #d4a574;
+            --color-sleep: #e8e3dc;   
+            --border-sleep: #9b8b7e;
 
-            /* Sidebar Task Label Colors (Clean White Pill) */
-            --sidebar-task-bg: #ffffff;
-            --sidebar-task-border: #ddd;
-            --sidebar-task-text: #2c3e50;
-            --sidebar-delete-color: #ef5350;
+            /* Sidebar Task Label Colors */
+            --sidebar-task-bg: #faf6f0;
+            --sidebar-task-border: #b8a592;
+            --sidebar-task-text: #3d2e1f;
+            --sidebar-delete-color: #8b4513;
 
-            /* Scheduled Task Label Colors (Cyan/Blue background) */
-            --scheduled-task-bg: #e0f7fa;
-            --scheduled-task-border: #80deea;
-            --scheduled-task-text: #006064;
+            /* Scheduled Task Label Colors */
+            --scheduled-task-bg: #f0e6d2;
+            --scheduled-task-border: #c9b896;
+            --scheduled-task-text: #4a3824;
 
-            /* Delete Button Color (for scheduled tasks) */
-            --delete-bg: #ef5350; 
+            /* Delete Button Color */
+            --delete-bg: #8b4513; 
             
             /* Header Colors */
-            --color-header-sat: #e0e0e0;
-            --color-header-sun: #ef5350;
+            --color-header-sat: #d4c4b0;
+            --color-header-sun: #c9a875;
 
-            /* Note Colors */
-            --note-yellow: #fff9c4;
-            --note-pink: #f8bbd0;
-            --note-blue: #bbdefb;
-            --note-green: #c8e6c9;
-            --note-purple: #e1bee7;
+            /* Note Colors - Aged Paper */
+            --note-yellow: #f9f3e3;
+            --note-pink: #f5e6e0;
+            --note-blue: #e8ece8;
+            --note-green: #ebe8d8;
+            --note-purple: #ede8e3;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Georgia', 'Garamond', serif;
             margin: 0;
             padding: 20px;
             background-color: var(--primary-bg);
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 115, 85, 0.03) 2px, rgba(139, 115, 85, 0.03) 4px);
             color: var(--text-main);
             min-height: 100vh; 
             box-sizing: border-box;
@@ -61,34 +64,55 @@
             display: flex;
             width: 100%;
             background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            border-radius: 4px;
+            box-shadow: 
+                0 8px 24px rgba(61, 46, 31, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 2px solid var(--border-color);
             overflow: hidden;
             min-height: 500px; 
             margin-bottom: 30px;
+            position: relative;
+        }
+
+        .main-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(139, 115, 85, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 115, 85, 0.03) 0%, transparent 50%);
+            pointer-events: none;
         }
 
         /* --- LEFT SIDEBAR (FOCUS) --- */
         .sidebar {
             width: 250px;
-            background-color: #ffffff; 
-            border-right: 1px solid #eee;
+            background-color: #f0e8da; 
+            border-right: 2px solid var(--border-color);
             padding: 20px;
             display: flex;
             flex-direction: column; 
             box-sizing: border-box;
+            position: relative;
+            z-index: 1;
         }
 
-        /* FOCUS HEADER - Aligned with Time Table and Day Headers */
         .sidebar h2 {
-            font-size: 28px; 
-            font-weight: bold;
+            font-size: 32px; 
+            font-weight: normal;
             margin: 0;
             color: var(--text-main);
             text-align: left;
             padding-bottom: 15px;
             margin-bottom: 18px;
             flex-shrink: 0;
+            font-family: 'Georgia', serif;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
         }
         
         .task-list-container {
@@ -106,24 +130,29 @@
             margin: 0;
         }
 
-        /* Draggable Focus Item Styling */
         .task-item {
             background: var(--sidebar-task-bg);
             color: var(--sidebar-task-text);
-            border: 1px solid var(--sidebar-task-border);
+            border: 1.5px solid var(--sidebar-task-border);
             padding: 10px 16px;
             margin-bottom: 10px;
-            border-radius: 25px; 
+            border-radius: 20px; 
             font-size: 14px;
-            font-weight: 500;
+            font-weight: normal;
             cursor: grab;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 
+                0 2px 4px rgba(61, 46, 31, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
             user-select: none;
             position: relative;
             display: flex; 
             justify-content: space-between;
             align-items: center;
+        }
+        
+        .task-item:hover {
+            box-shadow: 0 3px 8px rgba(61, 46, 31, 0.2);
         }
         
         .task-item span {
@@ -133,7 +162,6 @@
             min-width: 0; 
         }
 
-        /* Delete button for Focus List */
         .task-item .sidebar-delete-btn {
             color: var(--sidebar-delete-color);
             font-weight: bold;
@@ -152,7 +180,7 @@
         }
 
         .task-item.editing {
-            border: 2px solid #1890ff;
+            border: 2px solid #8b7355;
             cursor: default;
         }
         .task-item.editing .sidebar-delete-btn {
@@ -163,36 +191,40 @@
             border: none;
             background: transparent;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: normal;
             color: var(--sidebar-task-text);
             width: 100%;
             text-align: center;
+            font-family: 'Georgia', serif;
         }
         .task-item input:focus {
             outline: none;
         }
         
-        /* Add Focus Button */
         .add-task-btn {
             padding: 10px 16px;
-            background-color: #1890ff;
-            color: white;
-            border: none;
-            border-radius: 25px;
+            background: linear-gradient(to bottom, #c9a875 0%, #a68a5f 100%);
+            color: #f5f5dc;
+            border: 1.5px solid #8b7355;
+            border-radius: 20px;
             text-align: center;
-            font-weight: 500;
+            font-weight: normal;
             font-size: 14px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(24, 144, 255, 0.4);
-            transition: background-color 0.2s;
+            box-shadow: 
+                0 3px 6px rgba(61, 46, 31, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
             flex-shrink: 0; 
             width: 100%; 
-            box-sizing: border-box; 
+            box-sizing: border-box;
+            font-family: 'Georgia', serif;
+            letter-spacing: 1px;
         }
         .add-task-btn:hover {
-            background-color: #40a9ff;
+            background: linear-gradient(to bottom, #d4b080 0%, #b8956a 100%);
+            box-shadow: 0 4px 8px rgba(61, 46, 31, 0.25);
         }
-        
 
         /* --- TIMETABLE GRID STYLING --- */
         .schedule-area { 
@@ -200,19 +232,23 @@
             padding: 20px; 
             display: flex; 
             flex-direction: column; 
-            padding-bottom: 10px; 
+            padding-bottom: 10px;
+            position: relative;
+            z-index: 1;
         }
         
-        /* Time Table Title Container - Aligned with Focus and Day Headers */
         .main-title-container {
             grid-column: 1 / 6; 
             grid-row: 1; 
-            font-size: 28px;
-            font-weight: bold;
+            font-size: 32px;
+            font-weight: normal;
             color: var(--text-main);
             text-align: center;
             padding-bottom: 15px;
             margin-bottom: 18px;
+            font-family: 'Georgia', serif;
+            letter-spacing: 3px;
+            text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         .timetable-grid { 
@@ -222,20 +258,23 @@
             gap: 8px; 
         }
 
-        /* Day headers */
         .day-header { 
             grid-row: 2; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-weight: bold; 
-            border-radius: 6px; 
-            background-color: #f8f9fa; 
+            font-weight: normal;
+            font-size: 15px;
+            border-radius: 3px; 
+            background-color: #e8dcc4; 
+            border: 1.5px solid var(--border-color);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3);
+            font-family: 'Georgia', serif;
+            letter-spacing: 1px;
         }
         .day-header.sat { background-color: var(--color-header-sat); }
-        .day-header.sun { background-color: var(--color-header-sun); color: white; }
+        .day-header.sun { background-color: var(--color-header-sun); color: #f5f5dc; }
         
-        /* Grid content */
         .grid-content { 
             grid-column: 1 / -1; 
             grid-row: 3; 
@@ -245,57 +284,76 @@
             gap: 8px; 
         }
 
-        .event-fixed { display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 14px; font-weight: bold; border-left: 4px solid transparent; z-index: 2; }
+        .event-fixed { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 3px; 
+            font-size: 14px; 
+            font-weight: normal; 
+            border-left: 4px solid transparent; 
+            z-index: 2;
+            box-shadow: 
+                0 2px 4px rgba(61, 46, 31, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 1.5px solid;
+            letter-spacing: 1px;
+        }
 
         .morning-reset { 
             grid-column: 1 / 6; 
             grid-row: 1; 
             background-color: var(--color-morning);
-            border-left-color: var(--border-morning);
-            color: #795548;
+            border-color: var(--border-morning);
+            color: #7d5e3e;
         }
 
         .sleep-time { 
             grid-column: 1 / 6; 
             grid-row: 3; 
             background-color: var(--color-sleep);
-            border-left-color: var(--border-sleep);
-            color: #3f51b5;
+            border-color: var(--border-sleep);
+            color: #5d4e42;
         }
 
         .slot { 
             grid-row: 2; 
-            border: 1px dashed #eee; 
-            border-radius: 6px; 
-            background-color: #fff; 
+            border: 1.5px dashed var(--border-color); 
+            border-radius: 3px; 
+            background-color: #faf8f3; 
             position: relative; 
             display: flex; 
             flex-direction: column; 
             gap: 2px; 
-            padding: 2px; 
+            padding: 2px;
+            box-shadow: inset 0 1px 2px rgba(61, 46, 31, 0.05);
         }
-        .weekend-slot { background-color: #fafafa; }
-        .slot.drag-over { background-color: #f0f9ff; border-color: #2196f3; border-style: solid; }
+        .weekend-slot { background-color: #f5f1ea; }
+        .slot.drag-over { 
+            background-color: #f0e6d2; 
+            border-color: #a68a5f; 
+            border-style: solid; 
+        }
 
         .scheduled-task {
             background-color: var(--scheduled-task-bg);
             color: var(--scheduled-task-text);
-            border: 1px solid var(--scheduled-task-border);
-            border-radius: 4px;
+            border: 1.5px solid var(--scheduled-task-border);
+            border-radius: 3px;
             padding: 4px 8px;
             font-size: 12px;
             cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(61, 46, 31, 0.15);
             position: relative;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding-right: 25px; 
             flex-grow: 1; 
-            min-height: 20px; 
+            min-height: 20px;
+            font-family: 'Georgia', serif;
         }
 
-        /* Delete button for scheduled tasks (x in a red circle) */
         .delete-btn {
             position: absolute;
             right: 4px;
@@ -305,7 +363,7 @@
             height: 15px;
             border-radius: 50%;
             background-color: var(--delete-bg);
-            color: white;
+            color: #f5f5dc;
             font-weight: bold;
             line-height: 15px;
             text-align: center;
@@ -313,6 +371,7 @@
             font-family: sans-serif;
             opacity: 0; 
             transition: opacity 0.15s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
         .scheduled-task:hover .delete-btn {
             opacity: 1;
@@ -334,19 +393,24 @@
         }
 
         .add-note-btn {
-            padding: 8px 16px;
-            background-color: #1890ff;
-            color: white;
-            border: none;
+            padding: 10px 20px;
+            background: linear-gradient(to bottom, #c9a875 0%, #a68a5f 100%);
+            color: #f5f5dc;
+            border: 1.5px solid #8b7355;
             border-radius: 20px;
-            font-weight: 500;
+            font-weight: normal;
             font-size: 14px;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
-            transition: background-color 0.2s;
+            box-shadow: 
+                0 3px 8px rgba(61, 46, 31, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+            font-family: 'Georgia', serif;
+            letter-spacing: 1px;
         }
         .add-note-btn:hover {
-            background-color: #40a9ff;
+            background: linear-gradient(to bottom, #d4b080 0%, #b8956a 100%);
+            box-shadow: 0 4px 10px rgba(61, 46, 31, 0.25);
         }
 
         .notes-container {
@@ -360,11 +424,17 @@
             width: 200px;
             min-height: 150px;
             padding: 15px;
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 2px;
+            box-shadow: 
+                0 4px 12px rgba(61, 46, 31, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
             user-select: none;
-            font-size: 14px;
-            line-height: 1.5;
+            font-size: 13px;
+            line-height: 1.6;
+            border: 1.5px solid rgba(139, 115, 85, 0.3);
+            font-family: 'Georgia', serif;
+            background-image: 
+                repeating-linear-gradient(transparent, transparent 23px, rgba(139, 115, 85, 0.1) 23px, rgba(139, 115, 85, 0.1) 24px);
         }
 
         .sticky-note.yellow { background-color: var(--note-yellow); }
@@ -379,24 +449,25 @@
             align-items: center;
             margin-bottom: 10px;
             padding-bottom: 5px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(61, 46, 31, 0.2);
         }
 
         .note-drag-handle {
             cursor: move;
-            font-size: 16px;
-            color: rgba(0,0,0,0.4);
+            font-size: 14px;
+            color: rgba(61, 46, 31, 0.4);
             user-select: none;
         }
 
         .note-delete {
             cursor: pointer;
-            font-size: 16px;
-            color: rgba(0,0,0,0.4);
+            font-size: 18px;
+            color: rgba(139, 69, 19, 0.6);
             transition: color 0.2s;
+            font-weight: normal;
         }
         .note-delete:hover {
-            color: #ef5350;
+            color: #8b4513;
         }
 
         .note-content {
@@ -404,14 +475,28 @@
             border: none;
             background: transparent;
             resize: none;
-            font-family: inherit;
-            font-size: 14px;
-            line-height: 1.5;
+            font-family: 'Georgia', serif;
+            font-size: 13px;
+            line-height: 24px;
             min-height: 100px;
             color: var(--text-main);
         }
         .note-content:focus {
             outline: none;
+        }
+
+        /* Antique Paper Texture */
+        .sticky-note::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 115, 85, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(139, 115, 85, 0.05) 0%, transparent 50%);
+            pointer-events: none;
         }
 
     </style>
@@ -507,7 +592,7 @@
 
                 const deleteBtn = document.createElement("div");
                 deleteBtn.className = "sidebar-delete-btn";
-                deleteBtn.innerText = "x";
+                deleteBtn.innerText = "×";
                 deleteBtn.title = "Click to remove focus item";
                 
                 deleteBtn.onclick = function(e) { 
@@ -634,7 +719,7 @@
 
                 var deleteBtn = document.createElement("div");
                 deleteBtn.className = "delete-btn";
-                deleteBtn.innerText = "x";
+                deleteBtn.innerText = "×";
                 deleteBtn.title = "Click to remove";
                 
                 deleteBtn.onclick = function() {
