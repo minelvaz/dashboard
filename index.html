@@ -170,13 +170,14 @@
         
         /* Add Focus Button */
         .add-task-btn {
-            padding: 10px;
+            padding: 10px 16px;
             background-color: #1890ff;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 25px;
             text-align: center;
-            font-weight: bold;
+            font-weight: 500;
+            font-size: 14px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(24, 144, 255, 0.4);
             transition: background-color 0.2s;
@@ -198,7 +199,7 @@
             padding-bottom: 20px; 
         }
         
-        /* Time Table Title Container - Aligned with Focus */
+        /* Time Table Title Container - Aligned with Focus and Day Headers */
         .main-title-container {
             grid-column: 1 / 6; 
             grid-row: 1; 
@@ -207,7 +208,7 @@
             color: var(--text-main);
             text-align: center;
             padding-bottom: 15px;
-            margin-bottom: 5px;
+            margin-bottom: 13px;
         }
 
         .timetable-grid { 
@@ -329,7 +330,7 @@
             </div>
             
             <div class="add-task-btn" onclick="addTask()">
-                + Add New Focus
+                + Focus
             </div>
             
         </aside>
