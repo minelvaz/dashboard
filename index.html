@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antique Timetable - Unified Background</title>
+    <title>Antique Timetable - Dual Look</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
-            /* BOTH NOW SET TO THE SAME COLOR */
             --body-bg: #d1c4ab; 
             --primary-bg: #d1c4ab; 
-
-            --card-bg: #f5ede0;
+            --card-bg: #f5ede0; /* Live view table color */
             --text-main: #3d2e1f;
             --border-color: #8b7355;
             --marker-red: #a32a2a; 
@@ -82,11 +80,12 @@
         .timetable-container {
             width: 100%;
             max-width: 1050px;
-            background: var(--card-bg);
+            background: var(--card-bg); /* Changes to background color on download */
             border-radius: 12px;
             border: 2px solid var(--border-color);
             padding: 40px;
             position: relative;
+            transition: background-color 0.1s;
         }
 
         .header-row {
@@ -151,13 +150,13 @@
             grid-column: span 7;
             text-align: center;
             padding: 15px;
-            background: #fef5e7;
+            background: rgba(254, 245, 231, 0.5);
             border: 1.5px solid #d4a574;
             font-size: 18px;
         }
 
         .placed-task {
-            background: #f0e6d2;
+            background: rgba(240, 230, 210, 0.8);
             border: 1px solid var(--border-color);
             padding: 5px 10px;
             font-size: 14px;
@@ -268,24 +267,27 @@
 
     function downloadWallpaper() {
         const dateHeader = document.getElementById('currentDateTitle');
+        const tableContainer = document.querySelector('.timetable-container');
         const deleteButtons = document.querySelectorAll('.placed-task span:last-child');
         
-        // Hide elements
+        // --- 1. SET IMAGE COLORS ---
         dateHeader.style.visibility = 'hidden';
+        tableContainer.style.backgroundColor = '#d1c4ab'; // Match body background
         deleteButtons.forEach(btn => btn.style.display = 'none');
 
         const wrapper = document.getElementById('wallpaper-wrapper');
         html2canvas(wrapper, { 
             scale: 2,
-            backgroundColor: '#d1c4ab' // Forces the same color into the canvas
+            backgroundColor: '#d1c4ab'
         }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `Unified-Timetable.png`;
+            link.download = `Custom-Timetable.png`;
             link.href = canvas.toDataURL();
             link.click();
 
-            // Bring them back
+            // --- 2. RESTORE LIVE VIEW COLORS ---
             dateHeader.style.visibility = 'visible';
+            tableContainer.style.backgroundColor = '#f5ede0'; // Back to creamy color
             deleteButtons.forEach(btn => btn.style.display = 'inline');
         });
     }
