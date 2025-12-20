@@ -24,6 +24,7 @@
 
         // --- CLOUD SYNC LOGIC ---
         window.saveToCloud = async function() {
+            // Only attempt save if logged in as admin (roshman)
             if (window.isGuest) return; 
             
             const sidebarTasks = [];
@@ -37,14 +38,17 @@
             });
 
             try {
-                // This creates the 'users' collection and 'roshman' document if they don't exist
+                // This targets the exact document 'roshman' inside 'users' collection
                 await setDoc(doc(db, "users", "roshman"), {
                     sidebar: sidebarTasks,
                     grid: gridData,
                     lastUpdated: new Date()
                 });
                 console.log("Cloud Save Successful");
-            } catch (e) { console.error("Cloud Error: ", e); }
+            } catch (e) { 
+                console.error("Cloud Error: ", e); 
+                alert("Error saving to cloud: " + e.message);
+            }
         };
 
         window.loadFromCloud = async function() {
@@ -59,9 +63,12 @@
                     renderSidebar(data.sidebar || []);
                     renderGrid(data.grid || []);
                 } else {
+                    // Default tasks if no data exists in cloud yet
                     renderSidebar(["Japanese", "English", "Web Dev", "Electricity"]);
                 }
-            } catch (e) { console.error("Load Error: ", e); }
+            } catch (e) { 
+                console.error("Load Error: ", e); 
+            }
         };
     </script>
 
@@ -74,7 +81,6 @@
             --accent-tan: #c9a875; --color-sat: #d4c4b0; --color-sun: #c9a875;
         }
 
-        /* Login Screen */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--body-bg); display: flex; justify-content: center; align-items: center; z-index: 2000;
@@ -85,7 +91,6 @@
         .login-btn { padding: 10px 20px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; }
         .guest-btn { padding: 10px 20px; background: transparent; color: var(--text-main); border: 1.5px solid var(--text-main); border-radius: 5px; cursor: pointer; }
 
-        /* Main App */
         #main-app { display: none; width: 100%; min-height: 100vh; font-family: 'Georgia', serif; }
         body { margin: 0; background-color: var(--body-bg); display: flex; }
         .sidebar { width: 260px; background-color: #f0e8da; border-right: 2px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; }
@@ -181,7 +186,8 @@
     async function showApp() {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'flex';
-        await loadFromCloud();
+        // Load data from Firestore after logging in
+        await window.loadFromCloud();
         updateClockAndMarker();
     }
 
@@ -202,31 +208,45 @@
 
     function renderGrid(gridData) {
         const slots = document.querySelectorAll('.slot');
-        gridData.forEach((tasks, i) => tasks.forEach(t => createPlacedTask(slots[i], t)));
+        // Clear all slots first to prevent duplicates
+        slots.forEach(slot => slot.innerHTML = '');
+        
+        if (gridData && gridData.length > 0) {
+            gridData.forEach((tasks, i) => {
+                if (slots[i] && tasks) {
+                    tasks.forEach(t => createPlacedTask(slots[i], t));
+                }
+            });
+        }
     }
 
     function createPlacedTask(parent, name) {
         const div = document.createElement('div');
         div.className = 'placed-task';
-        div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" onclick="this.parentElement.remove(); saveToCloud();">×</span>`;
+        div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
         parent.appendChild(div);
     }
 
-    function removeSidebarItem(el) { el.parentElement.remove(); saveToCloud(); }
+    function removeSidebarItem(el) { el.parentElement.remove(); window.saveToCloud(); }
+    
     function addFocusItem() {
         const name = prompt("New Focus Task:");
-        if (name) { createSidebarItem(name); saveToCloud(); }
+        if (name) { 
+            createSidebarItem(name); 
+            window.saveToCloud(); 
+        }
     }
 
     function drag(ev) { ev.dataTransfer.setData("text", ev.target.querySelector('span').innerText); }
     function allowDrop(ev) { ev.preventDefault(); }
+    
     function drop(ev) {
         ev.preventDefault();
         const data = ev.dataTransfer.getData("text");
         const slot = ev.target.classList.contains('slot') ? ev.target : ev.target.closest('.slot');
         if(slot) {
             createPlacedTask(slot, data);
-            saveToCloud();
+            window.saveToCloud();
         }
     }
 
@@ -254,7 +274,13 @@
     }
 
     setInterval(updateClockAndMarker, 1000);
-    window.onload = () => { if(sessionStorage.getItem('userType')) { window.isGuest = sessionStorage.getItem('userType')==='guest'; showApp(); } };
+    window.onload = () => { 
+        const status = sessionStorage.getItem('userType');
+        if(status) { 
+            window.isGuest = (status === 'guest'); 
+            showApp(); 
+        } 
+    };
 </script>
 </body>
 </html>
