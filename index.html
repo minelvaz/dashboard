@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antique Timetable - Private Cloud</title>
+    <title>The Intent Table</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -25,11 +27,9 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // UPDATED: Your specific email address for private access
         const AUTHORIZED_EMAIL = "minelpriyavaz@gmail.com"; 
         let currentUser = null;
 
-        // --- AUTH LOGIC ---
         window.loginWithGoogle = async function() {
             try {
                 await signInWithPopup(auth, provider);
@@ -46,7 +46,6 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // FIXED: Matches the email you provided to grant access
                 if (user.email === AUTHORIZED_EMAIL) {
                     currentUser = user;
                     document.getElementById('login-screen').style.display = 'none';
@@ -63,14 +62,10 @@
             }
         });
 
-        // --- CLOUD SYNC LOGIC ---
         window.saveToCloud = async function() {
             if (!currentUser) return; 
-            
             const sidebarTasks = [];
             document.querySelectorAll('#sidebarTasks .task-item span:first-child').forEach(span => sidebarTasks.push(span.innerText));
-
-            // FIXED: Using an Object {} to avoid "Nested arrays not supported" error
             const gridData = {}; 
             document.querySelectorAll('.slot').forEach((slot, index) => {
                 const slotTasks = [];
@@ -79,18 +74,13 @@
                     gridData[`slot_${index}`] = slotTasks;
                 }
             });
-
             try {
-                // Saving specifically to the "roshman" document
                 await setDoc(doc(db, "users", "roshman"), {
                     sidebar: sidebarTasks,
                     grid: gridData,
                     lastUpdated: new Date()
                 });
-                console.log("Cloud Save Successful for " + AUTHORIZED_EMAIL);
-            } catch (e) { 
-                console.error("Cloud Error: ", e); 
-            }
+            } catch (e) { console.error("Cloud Error: ", e); }
         };
 
         window.loadFromCloud = async function() {
@@ -113,16 +103,67 @@
         :root {
             --body-bg: #d1c4ab; --primary-bg: #d1c4ab; --card-bg: #f5ede0; 
             --text-main: #3d2e1f; --border-color: #8b7355; --marker-red: #a32a2a; 
-            --accent-tan: #c9a875;
+            --accent-tan: #c9a875; --gold: #c9a875;
         }
 
+        /* --- NEW INTENT TABLE LOGIN PAGE DESIGN --- */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--body-bg); display: flex; justify-content: center; align-items: center; z-index: 2000;
+            background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), 
+                        url('https://www.transparenttextures.com/patterns/dark-wood.png'), #1a0f0a;
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
         }
-        .login-card { background: var(--card-bg); padding: 40px; border: 2px solid var(--border-color); border-radius: 12px; text-align: center; }
-        .login-btn { padding: 12px 25px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 15px; }
 
+        .login-card { 
+            background: rgba(40, 30, 20, 0.85); 
+            backdrop-filter: blur(12px);
+            padding: 50px 70px; 
+            border: 1px solid var(--gold); 
+            border-radius: 4px; 
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+        }
+
+        .login-card h2 { 
+            font-family: 'Cinzel', serif; 
+            color: var(--gold); 
+            font-size: 34px; 
+            margin-bottom: 5px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        .login-card p { 
+            font-family: 'Playfair Display', serif; 
+            color: #bfae96; 
+            font-style: italic;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+
+        .brass-btn { 
+            padding: 14px 35px; 
+            background: linear-gradient(145deg, #c9a875, #9b7e51);
+            color: #1a0f0a; 
+            border: 1px solid #5a4635;
+            border-radius: 2px; 
+            cursor: pointer; 
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 2px 3px 6px rgba(0,0,0,0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .brass-btn:hover {
+            background: linear-gradient(145deg, #dfc08d, #b39464);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(201, 168, 117, 0.3);
+        }
+
+        /* --- ORIGINAL DASHBOARD STYLES (UNCHANGED) --- */
         #main-app { display: none; width: 100%; min-height: 100vh; font-family: 'Georgia', serif; }
         body { margin: 0; background-color: var(--body-bg); display: flex; }
         .sidebar { width: 260px; background-color: #f0e8da; border-right: 2px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; }
@@ -142,22 +183,23 @@
         .span-row { grid-column: span 7; text-align: center; padding: 15px; background: rgba(254, 245, 231, 0.5); border: 1.5px solid #d4a574; }
         .placed-task { background: rgba(240, 230, 210, 0.8); border: 1px solid var(--border-color); padding: 5px 10px; font-size: 14px; border-radius: 4px; display: flex; justify-content: space-between; }
         .controls { position: fixed; top: 20px; right: 20px; z-index: 100; }
+        .login-btn-nav { padding: 12px 25px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-card">
-        <h2>Antique Timetable</h2>
-        <p>Private Access for Roshmanvaz</p>
-        <button class="login-btn" onclick="loginWithGoogle()">Sign in with Google</button>
+        <h2>The Intent Table</h2>
+        <p>Private Archive for Roshmanvaz</p>
+        <button class="brass-btn" onclick="loginWithGoogle()">Enter the Archive</button>
     </div>
 </div>
 
 <div id="main-app">
     <div class="controls">
-        <button class="login-btn" onclick="downloadWallpaper()">Download Wallpaper</button>
-        <button class="login-btn" style="background:transparent; color:var(--text-main); border:1px solid var(--text-main)" onclick="logout()">Logout</button>
+        <button class="login-btn-nav" onclick="downloadWallpaper()">Download Wallpaper</button>
+        <button class="login-btn-nav" style="background:transparent; color:var(--text-main); border:1px solid var(--text-main)" onclick="logout()">Logout</button>
     </div>
     <aside class="sidebar">
         <h2>Focus</h2>
