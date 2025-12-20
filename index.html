@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antique Timetable - Cloud Fixed</title>
+    <title>Antique Timetable - Roshmanvaz Cloud</title>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -29,7 +29,7 @@
             const sidebarTasks = [];
             document.querySelectorAll('#sidebarTasks .task-item span:first-child').forEach(span => sidebarTasks.push(span.innerText));
 
-            // FIXED: Using an Object {} instead of nested arrays [] to satisfy Firestore
+            // FIXED: Using an Object {} instead of nested arrays [] for Firestore compatibility
             const gridData = {}; 
             document.querySelectorAll('.slot').forEach((slot, index) => {
                 const slotTasks = [];
@@ -45,10 +45,9 @@
                     grid: gridData,
                     lastUpdated: new Date()
                 });
-                console.log("Cloud Save Successful");
+                console.log("Cloud Save Successful for roshmanvaz");
             } catch (e) { 
                 console.error("Cloud Error: ", e); 
-                alert("Error saving to cloud: " + e.message);
             }
         };
 
@@ -206,8 +205,6 @@
     function renderGrid(gridData) {
         const slots = document.querySelectorAll('.slot');
         slots.forEach(slot => slot.innerHTML = '');
-        
-        // Loop through the slot keys (e.g., slot_0, slot_1)
         for (const [key, tasks] of Object.entries(gridData)) {
             const index = parseInt(key.split('_')[1]);
             if (slots[index]) {
