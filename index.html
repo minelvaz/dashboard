@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antique Timetable - Private Cloud</title>
+    <title>The Intent Table</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -25,72 +27,44 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // UPDATED: Your specific email address for private access
         const AUTHORIZED_EMAIL = "minelpriyavaz@gmail.com"; 
         let currentUser = null;
 
-        // --- AUTH LOGIC ---
         window.loginWithGoogle = async function() {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                console.error("Login Error:", error);
-                alert("Login failed. Check if your domain is whitelisted.");
-            }
+            try { await signInWithPopup(auth, provider); } 
+            catch (error) { console.error("Login Error:", error); }
         };
 
-        window.logout = () => signOut(auth).then(() => {
-            sessionStorage.clear();
-            location.reload();
-        });
+        window.logout = () => signOut(auth).then(() => { sessionStorage.clear(); location.reload(); });
 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // FIXED: Matches the email you provided to grant access
-                if (user.email === AUTHORIZED_EMAIL) {
-                    currentUser = user;
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('main-app').style.display = 'flex';
-                    await window.loadFromCloud();
-                    updateClockAndMarker();
-                } else {
-                    alert("Unauthorized access. This dashboard is private.");
-                    signOut(auth);
-                }
-            } else {
-                document.getElementById('login-screen').style.display = 'flex';
-                document.getElementById('main-app').style.display = 'none';
+            if (user && user.email === AUTHORIZED_EMAIL) {
+                currentUser = user;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                await window.loadFromCloud();
+                updateClockAndMarker();
+            } else if (user) {
+                alert("Unauthorized access. This table is private.");
+                signOut(auth);
             }
         });
 
-        // --- CLOUD SYNC LOGIC ---
         window.saveToCloud = async function() {
-            if (!currentUser) return; 
-            
+            if (!currentUser) return;
             const sidebarTasks = [];
             document.querySelectorAll('#sidebarTasks .task-item span:first-child').forEach(span => sidebarTasks.push(span.innerText));
-
-            // FIXED: Using an Object {} to avoid "Nested arrays not supported" error
             const gridData = {}; 
             document.querySelectorAll('.slot').forEach((slot, index) => {
                 const slotTasks = [];
                 slot.querySelectorAll('.placed-task span:first-child').forEach(span => slotTasks.push(span.innerText));
-                if (slotTasks.length > 0) {
-                    gridData[`slot_${index}`] = slotTasks;
-                }
+                if (slotTasks.length > 0) gridData[`slot_${index}`] = slotTasks;
             });
-
             try {
-                // Saving specifically to the "roshman" document
                 await setDoc(doc(db, "users", "roshman"), {
-                    sidebar: sidebarTasks,
-                    grid: gridData,
-                    lastUpdated: new Date()
+                    sidebar: sidebarTasks, grid: gridData, lastUpdated: new Date()
                 });
-                console.log("Cloud Save Successful for " + AUTHORIZED_EMAIL);
-            } catch (e) { 
-                console.error("Cloud Error: ", e); 
-            }
+            } catch (e) { console.error("Cloud Error: ", e); }
         };
 
         window.loadFromCloud = async function() {
@@ -100,8 +74,6 @@
                     const data = docSnap.data();
                     renderSidebar(data.sidebar || []);
                     renderGrid(data.grid || {});
-                } else {
-                    renderSidebar(["Japanese", "English", "Web Dev", "Electricity"]);
                 }
             } catch (e) { console.error("Load Error: ", e); }
         };
@@ -111,75 +83,118 @@
     
     <style>
         :root {
-            --body-bg: #d1c4ab; --primary-bg: #d1c4ab; --card-bg: #f5ede0; 
-            --text-main: #3d2e1f; --border-color: #8b7355; --marker-red: #a32a2a; 
-            --accent-tan: #c9a875;
+            --dark-wood: #1a0f0a;
+            --gold: #c9a875;
+            --cream: #f5ede0;
+            --text-main: #3d2e1f;
         }
 
+        /* --- THE INTENT TABLE LOGIN SCREEN --- */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--body-bg); display: flex; justify-content: center; align-items: center; z-index: 2000;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://www.transparenttextures.com/patterns/dark-wood.png'), #1a0f0a;
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
         }
-        .login-card { background: var(--card-bg); padding: 40px; border: 2px solid var(--border-color); border-radius: 12px; text-align: center; }
-        .login-btn { padding: 12px 25px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 15px; }
 
-        #main-app { display: none; width: 100%; min-height: 100vh; font-family: 'Georgia', serif; }
-        body { margin: 0; background-color: var(--body-bg); display: flex; }
-        .sidebar { width: 260px; background-color: #f0e8da; border-right: 2px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; }
-        .task-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .login-card { 
+            background: rgba(45, 34, 25, 0.8); 
+            backdrop-filter: blur(10px);
+            padding: 60px; 
+            border: 1px solid var(--gold); 
+            border-radius: 4px; 
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .login-card h2 { 
+            font-family: 'Cinzel', serif; 
+            color: var(--gold); 
+            font-size: 38px; 
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+
+        .login-card p { 
+            font-family: 'Playfair Display', serif; 
+            color: #d1c4ab; 
+            font-style: italic;
+            margin-bottom: 40px;
+        }
+
+        /* AUTHENTIC BRASS LOGIN BUTTON */
+        .brass-btn { 
+            padding: 15px 40px; 
+            background: linear-gradient(145deg, #c9a875, #8b7355);
+            color: var(--dark-wood); 
+            border: 1px solid #4a3728;
+            border-radius: 2px; 
+            cursor: pointer; 
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .brass-btn:hover {
+            background: linear-gradient(145deg, #dfc08d, #a3896a);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(201, 168, 117, 0.4);
+        }
+
+        /* --- MAIN APP STYLES --- */
+        #main-app { display: none; width: 100%; min-height: 100vh; font-family: 'Playfair Display', serif; }
+        body { margin: 0; background-color: #d1c4ab; display: flex; }
+        .sidebar { width: 260px; background-color: #f0e8da; border-right: 2px solid #8b7355; padding: 20px; display: flex; flex-direction: column; }
         .task-item { background: #faf6f0; border: 1.5px solid #b8a592; padding: 10px 15px; margin-bottom: 12px; border-radius: 25px; cursor: grab; display: flex; justify-content: space-between; align-items: center; }
-        .delete-task { color: #a32a2a; cursor: pointer; font-weight: bold; }
-        .add-focus-btn { margin-top: 20px; padding: 12px; background: var(--accent-tan); color: white; border-radius: 25px; text-align: center; cursor: pointer; }
-        #wallpaper-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; background-color: var(--primary-bg); padding: 20px; }
-        .timetable-container { width: 100%; max-width: 1050px; background: var(--card-bg); border-radius: 12px; border: 2px solid var(--border-color); padding: 40px; position: relative; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
-        .date-title { font-size: 42px; }
-        .clock-box { font-size: 22px; border: 1.5px solid var(--border-color); padding: 10px 20px; background: rgba(255,255,255,0.3); border-radius: 5px; }
-        .timetable-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; position: relative; }
-        #marker { position: absolute; top: -35px; width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 22px solid var(--marker-red); transform: translateX(-50%); transition: left 0.5s; }
-        .day-label { text-align: center; padding: 15px 5px; background: #e8dcc4; border: 1.5px solid var(--border-color); font-weight: bold; }
-        .slot { min-height: 140px; border: 1.5px dashed var(--border-color); background: rgba(255,255,255,0.2); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .span-row { grid-column: span 7; text-align: center; padding: 15px; background: rgba(254, 245, 231, 0.5); border: 1.5px solid #d4a574; }
-        .placed-task { background: rgba(240, 230, 210, 0.8); border: 1px solid var(--border-color); padding: 5px 10px; font-size: 14px; border-radius: 4px; display: flex; justify-content: space-between; }
+        .add-focus-btn { margin-top: 20px; padding: 12px; background: #c9a875; color: white; border-radius: 25px; text-align: center; cursor: pointer; font-family: 'Cinzel', serif; }
+        #wallpaper-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; background-color: #d1c4ab; padding: 20px; }
+        .timetable-container { width: 100%; max-width: 1050px; background: var(--cream); border-radius: 8px; border: 2px solid #8b7355; padding: 40px; }
+        .date-title { font-family: 'Cinzel', serif; font-size: 42px; color: var(--text-main); }
+        .slot { min-height: 140px; border: 1.5px dashed #8b7355; background: rgba(255,255,255,0.2); padding: 10px; }
         .controls { position: fixed; top: 20px; right: 20px; z-index: 100; }
+        .action-btn { padding: 10px 20px; background: var(--text-main); color: white; border: none; border-radius: 4px; cursor: pointer; font-family: 'Cinzel', serif; margin-left: 10px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
     <div class="login-card">
-        <h2>Antique Timetable</h2>
+        <h2>The Intent Table</h2>
         <p>Private Access for Roshmanvaz</p>
-        <button class="login-btn" onclick="loginWithGoogle()">Sign in with Google</button>
+        <button class="brass-btn" onclick="loginWithGoogle()">Enter the Archive</button>
     </div>
 </div>
 
 <div id="main-app">
     <div class="controls">
-        <button class="login-btn" onclick="downloadWallpaper()">Download Wallpaper</button>
-        <button class="login-btn" style="background:transparent; color:var(--text-main); border:1px solid var(--text-main)" onclick="logout()">Logout</button>
+        <button class="action-btn" onclick="downloadWallpaper()">Save View</button>
+        <button class="action-btn" style="background:transparent; color:var(--text-main); border:1px solid var(--text-main)" onclick="logout()">Exit</button>
     </div>
     <aside class="sidebar">
-        <h2>Focus</h2>
+        <h2 style="font-family: 'Cinzel', serif;">Intents</h2>
         <ul class="task-list" id="sidebarTasks"></ul>
-        <div class="add-focus-btn" onclick="addFocusItem()">+ Focus</div>
+        <div class="add-focus-btn" onclick="addFocusItem()">+ Add Intent</div>
     </aside>
     <main id="wallpaper-wrapper">
         <div class="timetable-container">
-            <div class="header-row">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px;">
                 <div class="date-title" id="currentDateTitle"></div>
-                <div class="clock-box" id="clockDisplay"></div>
+                <div style="font-family: 'Cinzel', serif; font-size: 22px;" id="clockDisplay"></div>
             </div>
-            <div class="timetable-grid" id="mainGrid">
-                <div id="marker"></div>
-                <div class="day-label" id="day-1">Mon</div>
-                <div class="day-label" id="day-2">Tue</div>
-                <div class="day-label" id="day-3">Wed</div>
-                <div class="day-label" id="day-4">Thu</div>
-                <div class="day-label" id="day-5">Fri</div>
-                <div class="day-label" id="day-6">Sat</div>
-                <div class="day-label" id="day-0">Sun</div>
-                <div class="span-row">Morning Reset</div>
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; position: relative;">
+                <div id="marker" style="position: absolute; top: -35px; width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 22px solid #a32a2a; transform: translateX(-50%); transition: left 0.5s;"></div>
+                <div class="day-label" id="day-1" style="text-align: center; padding: 15px; background: #e8dcc4; border: 1.5px solid #8b7355; font-weight: bold; font-family: 'Cinzel';">Mon</div>
+                <div class="day-label" id="day-2" style="text-align: center; padding: 15px; background: #e8dcc4; border: 1.5px solid #8b7355; font-weight: bold; font-family: 'Cinzel';">Tue</div>
+                <div class="day-label" id="day-3" style="text-align: center; padding: 15px; background: #e8dcc4; border: 1.5px solid #8b7355; font-weight: bold; font-family: 'Cinzel';">Wed</div>
+                <div class="day-label" id="day-4" style="text-align: center; padding: 15px; background: #e8dcc4; border: 1.5px solid #8b7355; font-weight: bold; font-family: 'Cinzel';">Thu</div>
+                <div class="day-label" id="day-5" style="text-align: center; padding: 15px; background: #e8dcc4; border: 1.5px solid #8b7355; font-weight: bold; font-family: 'Cinzel';">Fri</div>
+                <div class="day-label" id="day-6" style="text-align: center; padding: 15px; background: #e8dcc4; border: 1.5px solid #8b7355; font-weight: bold; font-family: 'Cinzel';">Sat</div>
+                <div class="day-label" id="day-0" style="text-align: center; padding: 15px; background: #e8dcc4; border: 1.5px solid #8b7355; font-weight: bold; font-family: 'Cinzel';">Sun</div>
+                
                 <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
@@ -187,63 +202,51 @@
                 <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                <div class="span-row">Sleep Time</div>
             </div>
         </div>
     </main>
 </div>
 
 <script>
+    // Logic for rendering, drag & drop, and clock remains optimized for the new theme
     function renderSidebar(tasks) {
         const list = document.getElementById('sidebarTasks');
         list.innerHTML = '';
         tasks.forEach(name => createSidebarItem(name));
     }
-
     function createSidebarItem(name) {
         const li = document.createElement('li');
         li.className = 'task-item'; li.draggable = true; li.ondragstart = drag;
-        li.innerHTML = `<span>${name}</span><span class="delete-task" onclick="removeSidebarItem(this)">×</span>`;
+        li.innerHTML = `<span>${name}</span><span style="color:#a32a2a; cursor:pointer" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
         document.getElementById('sidebarTasks').appendChild(li);
     }
-
     function renderGrid(gridData) {
         const slots = document.querySelectorAll('.slot');
         slots.forEach(slot => slot.innerHTML = '');
         for (const [key, tasks] of Object.entries(gridData)) {
             const index = parseInt(key.split('_')[1]);
-            if (slots[index]) {
-                tasks.forEach(t => createPlacedTask(slots[index], t));
-            }
+            if (slots[index]) tasks.forEach(t => createPlacedTask(slots[index], t));
         }
     }
-
     function createPlacedTask(parent, name) {
         const div = document.createElement('div');
         div.className = 'placed-task';
+        div.style = "background:rgba(240,230,210,0.8); border:1px solid #8b7355; padding:5px 10px; margin-bottom:5px; border-radius:4px; display:flex; justify-content:space-between; font-size:13px;";
         div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
         parent.appendChild(div);
     }
-
-    function removeSidebarItem(el) { el.parentElement.remove(); window.saveToCloud(); }
-    
     function addFocusItem() {
-        const name = prompt("New Focus Task:");
+        const name = prompt("Declare your intent:");
         if (name) { createSidebarItem(name); window.saveToCloud(); }
     }
-
     function drag(ev) { ev.dataTransfer.setData("text", ev.target.querySelector('span').innerText); }
     function allowDrop(ev) { ev.preventDefault(); }
     function drop(ev) {
         ev.preventDefault();
         const data = ev.dataTransfer.getData("text");
         const slot = ev.target.classList.contains('slot') ? ev.target : ev.target.closest('.slot');
-        if(slot) {
-            createPlacedTask(slot, data);
-            window.saveToCloud();
-        }
+        if(slot) { createPlacedTask(slot, data); window.saveToCloud(); }
     }
-
     function updateClockAndMarker() {
         const now = new Date();
         const colombo = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (5.5 * 3600000));
@@ -254,19 +257,12 @@
         const marker = document.getElementById('marker');
         if (header && marker) marker.style.left = (header.offsetLeft + (header.offsetWidth / 2)) + 'px';
     }
-
     function downloadWallpaper() {
-        const h = document.getElementById('currentDateTitle');
-        const c = document.querySelector('.timetable-container');
-        const d = document.querySelectorAll('.placed-task span:last-child');
-        h.style.visibility = 'hidden'; c.style.backgroundColor = '#d1c4ab'; d.forEach(b => b.style.display = 'none');
-        html2canvas(document.getElementById('wallpaper-wrapper'), { scale: 2, backgroundColor: '#d1c4ab' }).then(canvas => {
+        html2canvas(document.getElementById('wallpaper-wrapper'), { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `Timetable.png`; link.href = canvas.toDataURL(); link.click();
-            h.style.visibility = 'visible'; c.style.backgroundColor = '#f5ede0'; d.forEach(b => b.style.display = 'inline');
+            link.download = `IntentTable.png`; link.href = canvas.toDataURL(); link.click();
         });
     }
-
     setInterval(updateClockAndMarker, 1000);
 </script>
 </body>
