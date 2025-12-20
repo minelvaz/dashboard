@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antique Timetable - Roshmanvaz Cloud</title>
+    <title>Antique Timetable - Private Cloud</title>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAyNLJDbHJweH61mRhRToqfla3e6LSdefE",
@@ -21,15 +22,53 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // UPDATE THIS: Replace with your actual email address
+        const AUTHORIZED_EMAIL = "your-email@gmail.com"; 
+        let currentUser = null;
+
+        // --- AUTH LOGIC ---
+        window.loginWithGoogle = async function() {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("Login failed. Check if your domain is whitelisted.");
+            }
+        };
+
+        window.logout = () => signOut(auth).then(() => {
+            sessionStorage.clear();
+            location.reload();
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                if (user.email === AUTHORIZED_EMAIL) {
+                    currentUser = user;
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'flex';
+                    await window.loadFromCloud();
+                    updateClockAndMarker();
+                } else {
+                    alert("Unauthorized access. This dashboard is private.");
+                    signOut(auth);
+                }
+            } else {
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('main-app').style.display = 'none';
+            }
+        });
 
         // --- CLOUD SYNC LOGIC ---
         window.saveToCloud = async function() {
-            if (window.isGuest) return; 
+            if (!currentUser) return; 
             
             const sidebarTasks = [];
             document.querySelectorAll('#sidebarTasks .task-item span:first-child').forEach(span => sidebarTasks.push(span.innerText));
 
-            // FIXED: Using an Object {} instead of nested arrays [] for Firestore compatibility
             const gridData = {}; 
             document.querySelectorAll('.slot').forEach((slot, index) => {
                 const slotTasks = [];
@@ -45,17 +84,13 @@
                     grid: gridData,
                     lastUpdated: new Date()
                 });
-                console.log("Cloud Save Successful for roshmanvaz");
+                console.log("Cloud Save Successful");
             } catch (e) { 
                 console.error("Cloud Error: ", e); 
             }
         };
 
         window.loadFromCloud = async function() {
-            if (window.isGuest) {
-                renderSidebar(["Japanese", "English", "Web Dev", "Electricity"]);
-                return;
-            }
             try {
                 const docSnap = await getDoc(doc(db, "users", "roshman"));
                 if (docSnap.exists()) {
@@ -75,7 +110,7 @@
         :root {
             --body-bg: #d1c4ab; --primary-bg: #d1c4ab; --card-bg: #f5ede0; 
             --text-main: #3d2e1f; --border-color: #8b7355; --marker-red: #a32a2a; 
-            --accent-tan: #c9a875; --color-sat: #d4c4b0; --color-sun: #c9a875;
+            --accent-tan: #c9a875;
         }
 
         #login-screen {
@@ -83,10 +118,7 @@
             background: var(--body-bg); display: flex; justify-content: center; align-items: center; z-index: 2000;
         }
         .login-card { background: var(--card-bg); padding: 40px; border: 2px solid var(--border-color); border-radius: 12px; text-align: center; }
-        .login-card input { display: block; width: 220px; padding: 10px; margin: 10px auto; border: 1.5px solid var(--border-color); border-radius: 5px; }
-        .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-        .login-btn { padding: 10px 20px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .guest-btn { padding: 10px 20px; background: transparent; color: var(--text-main); border: 1.5px solid var(--text-main); border-radius: 5px; cursor: pointer; }
+        .login-btn { padding: 12px 25px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
 
         #main-app { display: none; width: 100%; min-height: 100vh; font-family: 'Georgia', serif; }
         body { margin: 0; background-color: var(--body-bg); display: flex; }
@@ -114,20 +146,15 @@
 <div id="login-screen">
     <div class="login-card">
         <h2>Antique Timetable</h2>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
-        <div class="btn-row">
-            <button class="login-btn" onclick="checkLogin()">Login</button>
-            <button class="guest-btn" onclick="guestLogin()">Guest View</button>
-        </div>
-        <p id="error-msg" style="color: #a32a2a; display: none; margin-top: 15px;">Invalid Credentials</p>
+        <p>Private Dashboard</p>
+        <button class="login-btn" onclick="loginWithGoogle()">Sign in with Google</button>
     </div>
 </div>
 
 <div id="main-app">
     <div class="controls">
         <button class="login-btn" onclick="downloadWallpaper()">Download Wallpaper</button>
-        <button class="guest-btn" onclick="logout()">Logout</button>
+        <button class="login-btn" style="background:transparent; color:var(--text-main); border:1px solid var(--text-main)" onclick="logout()">Logout</button>
     </div>
     <aside class="sidebar">
         <h2>Focus</h2>
@@ -164,31 +191,6 @@
 </div>
 
 <script>
-    window.isGuest = false;
-
-    function checkLogin() {
-        if(document.getElementById('username').value === "roshman" && document.getElementById('password').value === "1997") {
-            window.isGuest = false;
-            sessionStorage.setItem('userType', 'admin');
-            showApp();
-        } else { document.getElementById('error-msg').style.display = 'block'; }
-    }
-
-    function guestLogin() {
-        window.isGuest = true;
-        sessionStorage.setItem('userType', 'guest');
-        showApp();
-    }
-
-    async function showApp() {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('main-app').style.display = 'flex';
-        await window.loadFromCloud();
-        updateClockAndMarker();
-    }
-
-    function logout() { sessionStorage.clear(); location.reload(); }
-
     function renderSidebar(tasks) {
         const list = document.getElementById('sidebarTasks');
         list.innerHTML = '';
@@ -221,6 +223,7 @@
     }
 
     function removeSidebarItem(el) { el.parentElement.remove(); window.saveToCloud(); }
+    
     function addFocusItem() {
         const name = prompt("New Focus Task:");
         if (name) { createSidebarItem(name); window.saveToCloud(); }
@@ -262,7 +265,6 @@
     }
 
     setInterval(updateClockAndMarker, 1000);
-    window.onload = () => { if(sessionStorage.getItem('userType')) { window.isGuest = sessionStorage.getItem('userType')==='guest'; showApp(); } };
 </script>
 </body>
 </html>
