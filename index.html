@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antique Timetable - Persistent Focus</title>
+    <title>Antique Timetable - Full Save</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -174,8 +174,7 @@
 
 <aside class="sidebar">
     <h2>Focus</h2>
-    <ul class="task-list" id="sidebarTasks">
-        </ul>
+    <ul class="task-list" id="sidebarTasks"></ul>
     <div class="add-focus-btn" onclick="addFocusItem()">+ Focus</div>
 </aside>
 
@@ -213,45 +212,80 @@
 </main>
 
 <script>
-    // --- STORAGE LOGIC ---
-    function saveTasks() {
+    // --- SIDEBAR STORAGE ---
+    function saveSidebar() {
         const tasks = [];
         document.querySelectorAll('#sidebarTasks .task-item span:first-child').forEach(span => {
             tasks.push(span.innerText);
         });
-        localStorage.setItem('focusTasks', JSON.stringify(tasks));
+        localStorage.setItem('focusSidebar', JSON.stringify(tasks));
     }
 
-    function loadTasks() {
-        const saved = localStorage.getItem('focusTasks');
-        const taskList = document.getElementById('sidebarTasks');
-        taskList.innerHTML = '';
-        
+    function loadSidebar() {
+        const saved = localStorage.getItem('focusSidebar');
         const tasks = saved ? JSON.parse(saved) : ["Japanese", "English", "Web Dev", "Electricity"];
-        
-        tasks.forEach(taskName => createTaskElement(taskName));
+        document.getElementById('sidebarTasks').innerHTML = '';
+        tasks.forEach(name => createSidebarItem(name));
     }
 
-    function createTaskElement(name) {
+    function createSidebarItem(name) {
         const li = document.createElement('li');
         li.className = 'task-item';
         li.draggable = true;
         li.ondragstart = drag;
-        li.innerHTML = `<span>${name}</span><span class="delete-task" onclick="removeTask(this)">×</span>`;
+        li.innerHTML = `<span>${name}</span><span class="delete-task" onclick="removeSidebarItem(this)">×</span>`;
         document.getElementById('sidebarTasks').appendChild(li);
     }
 
-    function removeTask(element) {
+    function removeSidebarItem(element) {
         element.parentElement.remove();
-        saveTasks();
+        saveSidebar();
     }
 
     function addFocusItem() {
-        const taskName = prompt("Enter Focus Task:");
-        if (taskName) {
-            createTaskElement(taskName);
-            saveTasks();
+        const name = prompt("Enter Focus Task:");
+        if (name) {
+            createSidebarItem(name);
+            saveSidebar();
         }
+    }
+
+    // --- GRID STORAGE ---
+    function saveGrid() {
+        const gridData = [];
+        document.querySelectorAll('.slot').forEach((slot, index) => {
+            const slotTasks = [];
+            slot.querySelectorAll('.placed-task span:first-child').forEach(span => {
+                slotTasks.push(span.innerText);
+            });
+            gridData[index] = slotTasks;
+        });
+        localStorage.setItem('focusGrid', JSON.stringify(gridData));
+    }
+
+    function loadGrid() {
+        const saved = localStorage.getItem('focusGrid');
+        if (!saved) return;
+        const gridData = JSON.parse(saved);
+        const slots = document.querySelectorAll('.slot');
+        
+        gridData.forEach((slotTasks, slotIndex) => {
+            slotTasks.forEach(taskName => {
+                createPlacedTask(slots[slotIndex], taskName);
+            });
+        });
+    }
+
+    function createPlacedTask(parent, name) {
+        const div = document.createElement('div');
+        div.className = 'placed-task';
+        div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" onclick="removePlacedTask(this)">×</span>`;
+        parent.appendChild(div);
+    }
+
+    function removePlacedTask(element) {
+        element.parentElement.remove();
+        saveGrid();
     }
 
     // --- DRAG & DROP ---
@@ -260,17 +294,14 @@
     function drop(ev) {
         ev.preventDefault();
         const data = ev.dataTransfer.getData("text");
-        const taskDiv = document.createElement('div');
-        taskDiv.className = 'placed-task';
-        taskDiv.innerHTML = `<span>${data}</span><span style="cursor:pointer; color:#a32a2a" onclick="this.parentElement.remove()">×</span>`;
-        ev.target.appendChild(taskDiv);
+        createPlacedTask(ev.target, data);
+        saveGrid();
     }
 
     // --- CLOCK & MARKER ---
     function updateClockAndMarker() {
         const now = new Date();
         const colombo = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (5.5 * 3600000));
-        
         document.getElementById('clockDisplay').textContent = colombo.toLocaleTimeString();
 
         const y = colombo.getFullYear();
@@ -281,10 +312,8 @@
         const dayIndex = colombo.getDay(); 
         const activeHeader = document.getElementById(`day-${dayIndex}`);
         const marker = document.getElementById('marker');
-
         if (activeHeader && marker) {
-            const centerPoint = activeHeader.offsetLeft + (activeHeader.offsetWidth / 2);
-            marker.style.left = centerPoint + 'px';
+            marker.style.left = (activeHeader.offsetLeft + (activeHeader.offsetWidth / 2)) + 'px';
         }
     }
 
@@ -297,10 +326,9 @@
         tableContainer.style.backgroundColor = '#d1c4ab'; 
         deleteButtons.forEach(btn => btn.style.display = 'none');
 
-        const wrapper = document.getElementById('wallpaper-wrapper');
-        html2canvas(wrapper, { scale: 2, backgroundColor: '#d1c4ab' }).then(canvas => {
+        html2canvas(document.getElementById('wallpaper-wrapper'), { scale: 2, backgroundColor: '#d1c4ab' }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `Custom-Timetable.png`;
+            link.download = `Timetable-Saved.png`;
             link.href = canvas.toDataURL();
             link.click();
 
@@ -312,7 +340,8 @@
 
     setInterval(updateClockAndMarker, 1000);
     window.onload = () => {
-        loadTasks();
+        loadSidebar();
+        loadGrid();
         updateClockAndMarker();
     };
     window.onresize = updateClockAndMarker;
