@@ -181,7 +181,7 @@
         .day-label { text-align: center; padding: 15px 5px; background: #e8dcc4; border: 1.5px solid var(--border-color); font-weight: bold; }
         .slot { min-height: 140px; border: 1.5px dashed var(--border-color); background: rgba(255,255,255,0.2); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
         .span-row { grid-column: span 7; text-align: center; padding: 15px; background: rgba(254, 245, 231, 0.5); border: 1.5px solid #d4a574; }
-        .placed-task { background: rgba(240, 230, 210, 0.8); border: 1px solid var(--border-color); padding: 5px 10px; font-size: 14px; border-radius: 4px; display: flex; justify-content: space-between; }
+        .placed-task { background: rgba(240, 230, 210, 0.8); border: 1px solid var(--border-color); padding: 5px 10px; font-size: 14px; border-radius: 4px; display: flex; justify-content: space-between; cursor: grab; }
         .controls { position: fixed; top: 20px; right: 20px; z-index: 100; }
         .login-btn-nav { padding: 12px 25px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
     </style>
@@ -203,7 +203,7 @@
     </div>
     <aside class="sidebar">
         <h2>Focus</h2>
-        <ul class="task-list" id="sidebarTasks"></ul>
+        <ul class="task-list" id="sidebarTasks" ondrop="dropToSidebar(event)" ondragover="allowDrop(event)"></ul>
         <div class="add-focus-btn" onclick="addFocusItem()">+ Focus</div>
     </aside>
     <main id="wallpaper-wrapper">
@@ -222,13 +222,13 @@
                 <div class="day-label" id="day-6">Sat</div>
                 <div class="day-label" id="day-0">Sun</div>
                 <div class="span-row">Morning Reset</div>
-                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
                 <div class="span-row">Sleep Time</div>
             </div>
         </div>
@@ -236,6 +236,8 @@
 </div>
 
 <script>
+    let draggedElement = null;
+
     function renderSidebar(tasks) {
         const list = document.getElementById('sidebarTasks');
         list.innerHTML = '';
@@ -244,7 +246,8 @@
 
     function createSidebarItem(name) {
         const li = document.createElement('li');
-        li.className = 'task-item'; li.draggable = true; li.ondragstart = drag;
+        li.className = 'task-item'; li.draggable = true; 
+        li.ondragstart = (e) => { draggedElement = li; drag(e); };
         li.innerHTML = `<span>${name}</span><span class="delete-task" onclick="removeSidebarItem(this)">×</span>`;
         document.getElementById('sidebarTasks').appendChild(li);
     }
@@ -263,6 +266,8 @@
     function createPlacedTask(parent, name) {
         const div = document.createElement('div');
         div.className = 'placed-task';
+        div.draggable = true;
+        div.ondragstart = (e) => { draggedElement = div; drag(e); };
         div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
         parent.appendChild(div);
     }
@@ -276,14 +281,31 @@
 
     function drag(ev) { ev.dataTransfer.setData("text", ev.target.querySelector('span').innerText); }
     function allowDrop(ev) { ev.preventDefault(); }
-    function drop(ev) {
+
+    function dropToGrid(ev) {
         ev.preventDefault();
         const data = ev.dataTransfer.getData("text");
         const slot = ev.target.classList.contains('slot') ? ev.target : ev.target.closest('.slot');
         if(slot) {
+            // Remove the dragged element from its previous home if it was already in the grid
+            if (draggedElement && draggedElement.classList.contains('placed-task')) {
+                draggedElement.remove();
+            }
             createPlacedTask(slot, data);
             window.saveToCloud();
         }
+        draggedElement = null;
+    }
+
+    function dropToSidebar(ev) {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData("text");
+        if (draggedElement && draggedElement.classList.contains('placed-task')) {
+            draggedElement.remove();
+            createSidebarItem(data);
+            window.saveToCloud();
+        }
+        draggedElement = null;
     }
 
     function updateClockAndMarker() {
