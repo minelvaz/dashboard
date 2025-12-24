@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intent Table</title>
+    <title>Dashboard</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
 
@@ -190,7 +190,7 @@
 
 <div id="login-screen">
     <div class="login-card">
-        <h2>Intent Table</h2>
+        <h2>Dashboard</h2>
         <p>Private Archive for Roshmanvaz</p>
         <button class="brass-btn" onclick="loginWithGoogle()">Sign In</button>
     </div>
@@ -287,7 +287,6 @@
         const data = ev.dataTransfer.getData("text");
         const slot = ev.target.classList.contains('slot') ? ev.target : ev.target.closest('.slot');
         if(slot) {
-            // Remove the dragged element from its previous home if it was already in the grid
             if (draggedElement && draggedElement.classList.contains('placed-task')) {
                 draggedElement.remove();
             }
