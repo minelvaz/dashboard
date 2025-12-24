@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     
-    <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/a/default-user=s180">
-    <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/a/default-user=s32">
+    <link rel="apple-touch-icon" href="https://fonts.gstatic.com/s/i/googlematerialicons/account_circle/v6/black-24dp/1x/gm_account_circle_black_24dp.png">
+    <link rel="icon" type="image/png" href="https://fonts.gstatic.com/s/i/googlematerialicons/account_circle/v6/black-24dp/1x/gm_account_circle_black_24dp.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
 
@@ -109,7 +109,6 @@
             --accent-tan: #c9a875; --gold: #c9a875;
         }
 
-        /* --- LOGIN PAGE DESIGN --- */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), 
@@ -166,7 +165,6 @@
             box-shadow: 0 8px 20px rgba(201, 168, 117, 0.3);
         }
 
-        /* --- DASHBOARD STYLES --- */
         #main-app { display: none; width: 100%; min-height: 100vh; font-family: 'Georgia', serif; }
         body { margin: 0; background-color: var(--body-bg); display: flex; }
         .sidebar { width: 260px; background-color: #f0e8da; border-right: 2px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; }
@@ -184,7 +182,7 @@
         .day-label { text-align: center; padding: 15px 5px; background: #e8dcc4; border: 1.5px solid var(--border-color); font-weight: bold; }
         .slot { min-height: 140px; border: 1.5px dashed var(--border-color); background: rgba(255,255,255,0.2); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
         .span-row { grid-column: span 7; text-align: center; padding: 15px; background: rgba(254, 245, 231, 0.5); border: 1.5px solid #d4a574; }
-        .placed-task { background: rgba(240, 230, 210, 0.8); border: 1px solid var(--border-color); padding: 5px 10px; font-size: 14px; border-radius: 4px; display: flex; justify-content: space-between; cursor: grab; }
+        .placed-task { background: rgba(240, 230, 210, 0.8); border: 1px solid var(--border-color); padding: 5px 10px; font-size: 14px; border-radius: 4px; display: flex; justify-content: space-between; }
         .controls { position: fixed; top: 20px; right: 20px; z-index: 100; }
         .login-btn-nav { padding: 12px 25px; background: var(--text-main); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
     </style>
@@ -206,7 +204,7 @@
     </div>
     <aside class="sidebar">
         <h2>Focus</h2>
-        <ul class="task-list" id="sidebarTasks" ondrop="dropToSidebar(event)" ondragover="allowDrop(event)"></ul>
+        <ul class="task-list" id="sidebarTasks"></ul>
         <div class="add-focus-btn" onclick="addFocusItem()">+ Focus</div>
     </aside>
     <main id="wallpaper-wrapper">
@@ -225,13 +223,13 @@
                 <div class="day-label" id="day-6">Sat</div>
                 <div class="day-label" id="day-0">Sun</div>
                 <div class="span-row">Morning Reset</div>
-                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
-                <div class="slot" ondrop="dropToGrid(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 <div class="span-row">Sleep Time</div>
             </div>
         </div>
@@ -239,8 +237,6 @@
 </div>
 
 <script>
-    let draggedElement = null;
-
     function renderSidebar(tasks) {
         const list = document.getElementById('sidebarTasks');
         list.innerHTML = '';
@@ -249,8 +245,7 @@
 
     function createSidebarItem(name) {
         const li = document.createElement('li');
-        li.className = 'task-item'; li.draggable = true; 
-        li.ondragstart = (e) => { draggedElement = li; drag(e); };
+        li.className = 'task-item'; li.draggable = true; li.ondragstart = drag;
         li.innerHTML = `<span>${name}</span><span class="delete-task" onclick="removeSidebarItem(this)">×</span>`;
         document.getElementById('sidebarTasks').appendChild(li);
     }
@@ -269,8 +264,6 @@
     function createPlacedTask(parent, name) {
         const div = document.createElement('div');
         div.className = 'placed-task';
-        div.draggable = true;
-        div.ondragstart = (e) => { draggedElement = div; drag(e); };
         div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
         parent.appendChild(div);
     }
@@ -284,30 +277,14 @@
 
     function drag(ev) { ev.dataTransfer.setData("text", ev.target.querySelector('span').innerText); }
     function allowDrop(ev) { ev.preventDefault(); }
-
-    function dropToGrid(ev) {
+    function drop(ev) {
         ev.preventDefault();
         const data = ev.dataTransfer.getData("text");
         const slot = ev.target.classList.contains('slot') ? ev.target : ev.target.closest('.slot');
         if(slot) {
-            if (draggedElement && draggedElement.classList.contains('placed-task')) {
-                draggedElement.remove();
-            }
             createPlacedTask(slot, data);
             window.saveToCloud();
         }
-        draggedElement = null;
-    }
-
-    function dropToSidebar(ev) {
-        ev.preventDefault();
-        const data = ev.dataTransfer.getData("text");
-        if (draggedElement && draggedElement.classList.contains('placed-task')) {
-            draggedElement.remove();
-            createSidebarItem(data);
-            window.saveToCloud();
-        }
-        draggedElement = null;
     }
 
     function updateClockAndMarker() {
