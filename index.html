@@ -60,7 +60,7 @@
                 }
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
-                document.getElementById('main-app').style.display = 'none';
+                document.getElementById('main-app').style.none = 'none';
             }
         });
 
@@ -137,9 +137,7 @@
         .task-item { background: #faf6f0; border: 1.5px solid #b8a592; padding: 10px 15px; margin-bottom: 12px; border-radius: 25px; cursor: grab; display: flex; justify-content: space-between; }
         .delete-task { color: #a32a2a; cursor: pointer; font-weight: bold; }
         
-        .action-btn { margin-top: 10px; padding: 12px; border-radius: 25px; text-align: center; cursor: pointer; color: white; font-weight: bold; }
-        .add-focus-btn { background: var(--accent-tan); }
-        .clear-grid-btn { background: var(--marker-red); }
+        .add-focus-btn { margin-top: 20px; padding: 12px; background: var(--accent-tan); color: white; border-radius: 25px; text-align: center; cursor: pointer; font-weight: bold; }
 
         #wallpaper-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; background-color: var(--primary-bg); padding: 20px; }
         .timetable-container { width: 100%; max-width: 1050px; background: var(--card-bg); border-radius: 12px; border: 2px solid var(--border-color); padding: 40px; position: relative; }
@@ -174,8 +172,7 @@
     <aside class="sidebar">
         <h2>Focus</h2>
         <ul class="task-list" id="sidebarTasks" ondrop="dropToSidebar(event)" ondragover="allowDrop(event)"></ul>
-        <div class="action-btn add-focus-btn" onclick="addFocusItem()">+ Focus</div>
-        <div class="action-btn clear-grid-btn" onclick="clearGrid()">Clear Grid</div>
+        <div class="add-focus-btn" onclick="addFocusItem()">+ Focus</div>
     </aside>
     <main id="wallpaper-wrapper">
         <div class="timetable-container">
@@ -238,13 +235,6 @@
         div.ondragstart = (e) => { draggedElement = div; e.dataTransfer.setData("text", name); };
         div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" class="delete-x" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
         parent.appendChild(div);
-    }
-
-    function clearGrid() {
-        if (confirm("Clear all tasks from the grid?")) {
-            document.querySelectorAll('.slot').forEach(slot => slot.innerHTML = '');
-            window.saveToCloud();
-        }
     }
 
     function removeSidebarItem(el) { el.parentElement.remove(); window.saveToCloud(); }
