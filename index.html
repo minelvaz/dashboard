@@ -60,7 +60,7 @@
                 }
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
-                document.getElementById('main-app').style.none = 'none';
+                document.getElementById('main-app').style.display = 'none';
             }
         });
 
@@ -250,7 +250,11 @@
         const name = ev.dataTransfer.getData("text");
         const slot = ev.target.closest('.slot');
         if (slot) {
-            if (draggedElement) draggedElement.remove();
+            // FIXED: Only remove the original if it was dragged from another grid slot
+            // If it came from the sidebar, we keep it in the sidebar
+            if (draggedElement && draggedElement.classList.contains('placed-task')) {
+                draggedElement.remove();
+            }
             createPlacedTask(slot, name);
             window.saveToCloud();
         }
@@ -259,9 +263,11 @@
     function dropToSidebar(ev) {
         ev.preventDefault();
         const name = ev.dataTransfer.getData("text");
+        // Only allow dropping "back" to sidebar if it was on the grid
         if (draggedElement && draggedElement.classList.contains('placed-task')) {
             draggedElement.remove();
-            createSidebarItem(name);
+            // Optional: Uncomment below if you want the item to move back to the focus list
+            // createSidebarItem(name); 
             window.saveToCloud();
         }
     }
@@ -281,7 +287,6 @@
         const h = document.getElementById('currentDateTitle');
         const deleteButtons = document.querySelectorAll('.delete-x');
         
-        // Hide date and task delete buttons for clean download
         h.style.visibility = 'hidden'; 
         deleteButtons.forEach(btn => btn.style.display = 'none');
         
@@ -289,7 +294,6 @@
             const link = document.createElement('a');
             link.download = `Timetable.png`; link.href = canvas.toDataURL(); link.click();
             
-            // Show them again immediately after
             h.style.visibility = 'visible';
             deleteButtons.forEach(btn => btn.style.display = 'inline');
         });
