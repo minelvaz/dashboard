@@ -136,7 +136,10 @@
         .task-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; min-height: 100px; }
         .task-item { background: #faf6f0; border: 1.5px solid #b8a592; padding: 10px 15px; margin-bottom: 12px; border-radius: 25px; cursor: grab; display: flex; justify-content: space-between; }
         .delete-task { color: #a32a2a; cursor: pointer; font-weight: bold; }
-        .add-focus-btn { margin-top: 20px; padding: 12px; background: var(--accent-tan); color: white; border-radius: 25px; text-align: center; cursor: pointer; }
+        .action-btn { margin-top: 10px; padding: 12px; border-radius: 25px; text-align: center; cursor: pointer; color: white; font-weight: bold; }
+        .add-focus-btn { background: var(--accent-tan); }
+        .clear-grid-btn { background: var(--marker-red); }
+        
         #wallpaper-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; background-color: var(--primary-bg); padding: 20px; }
         .timetable-container { width: 100%; max-width: 1050px; background: var(--card-bg); border-radius: 12px; border: 2px solid var(--border-color); padding: 40px; position: relative; }
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
@@ -170,7 +173,8 @@
     <aside class="sidebar">
         <h2>Focus</h2>
         <ul class="task-list" id="sidebarTasks" ondrop="dropToSidebar(event)" ondragover="allowDrop(event)"></ul>
-        <div class="add-focus-btn" onclick="addFocusItem()">+ Focus</div>
+        <div class="action-btn add-focus-btn" onclick="addFocusItem()">+ Focus</div>
+        <div class="action-btn clear-grid-btn" onclick="clearGrid()">Clear Grid</div>
     </aside>
     <main id="wallpaper-wrapper">
         <div class="timetable-container">
@@ -231,8 +235,15 @@
         const div = document.createElement('div');
         div.className = 'placed-task'; div.draggable = true;
         div.ondragstart = (e) => { draggedElement = div; e.dataTransfer.setData("text", name); };
-        div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
+        div.innerHTML = `<span>${name}</span><span style="cursor:pointer; color:#a32a2a" class="delete-x" onclick="this.parentElement.remove(); window.saveToCloud();">×</span>`;
         parent.appendChild(div);
+    }
+
+    function clearGrid() {
+        if (confirm("Clear all tasks from the grid?")) {
+            document.querySelectorAll('.slot').forEach(slot => slot.innerHTML = '');
+            window.saveToCloud();
+        }
     }
 
     function removeSidebarItem(el) { el.parentElement.remove(); window.saveToCloud(); }
@@ -276,10 +287,20 @@
     }
 
     function downloadWallpaper() {
-        const wrapper = document.getElementById('wallpaper-wrapper');
-        html2canvas(wrapper, { scale: 2 }).then(canvas => {
+        const h = document.getElementById('currentDateTitle');
+        const deleteButtons = document.querySelectorAll('.delete-x');
+        
+        // Hide date and delete buttons for a clean wallpaper
+        h.style.visibility = 'hidden'; 
+        deleteButtons.forEach(btn => btn.style.display = 'none');
+        
+        html2canvas(document.getElementById('wallpaper-wrapper'), { scale: 2 }).then(canvas => {
             const link = document.createElement('a');
             link.download = `Timetable.png`; link.href = canvas.toDataURL(); link.click();
+            
+            // Show them again after download
+            h.style.visibility = 'visible';
+            deleteButtons.forEach(btn => btn.style.display = 'inline');
         });
     }
 
